@@ -8,11 +8,11 @@ public class BitField {
     }
 
     public static BitField zeros(int size) {
-        ArrayList<Boolean> ones = new ArrayList<>();
+        ArrayList<Boolean> zeros = new ArrayList<>();
         for (int i = 0; i < size; i++) {
-            ones.add(true);
+            zeros.add(false);
         }
-        return new BitField(ones);
+        return new BitField(zeros);
     }
 
     public static BitField ones(int size) {
