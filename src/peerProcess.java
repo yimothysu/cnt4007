@@ -9,6 +9,7 @@
 //are no other peer s to make connection s to.
 
 import java.io.BufferedReader;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.Vector;
@@ -16,6 +17,7 @@ import java.util.Vector;
 public class peerProcess {
     static String peerId;
     static BitField bitfield;
+    static Vector<RemotePeerInfo> peerInfoVector;
     public static void main(String[] args) throws IOException {
         if (args.length == 0) {
             System.out.println("Usage: java peerProcess [peerId]");
@@ -24,18 +26,19 @@ public class peerProcess {
         peerId = args[0];
 
         Common common = CommonCfgReader.read();
+        peerInfoVector = PeerInfoCfgReader.read();
+        readPeerInfo(common);
 
+        System.out.println(bitfield.bits);
+    }
+
+    private static void readPeerInfo(Common common) throws IOException {
         String st;
         boolean found = false;
         BufferedReader in = new BufferedReader(new FileReader("PeerInfo.cfg"));
         while((st = in.readLine()) != null) {
 
             String[] tokens = st.split("\\s+");
-            //System.out.println("tokens begin ----");
-            //for (int x=0; x<tokens.length; x++) {
-            //    System.out.println(tokens[x]);
-            //}
-            //System.out.println("tokens end ----");
 
             String rowPeerId = tokens[0];
             if (rowPeerId.equals(peerId)) {
@@ -55,9 +58,6 @@ public class peerProcess {
         }
         if (!found) {
             System.out.println("Error: Peer ID " + peerId + " not found!");
-            return;
         }
-
-        System.out.println(bitfield.bits);
     }
 }
