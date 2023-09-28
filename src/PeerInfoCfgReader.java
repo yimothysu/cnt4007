@@ -1,13 +1,14 @@
 import java.io.BufferedReader;
 import java.io.FileReader;
+import java.util.HashMap;
 import java.util.Vector;
 
 public class PeerInfoCfgReader {
-    public static Vector<RemotePeerInfo> read()
+    public static HashMap<String, RemotePeerInfo> read()
     {
         String st;
         int i1;
-        Vector<RemotePeerInfo> peerInfoVector = new Vector<RemotePeerInfo>();
+        HashMap<String, RemotePeerInfo> peerInfoMap = new HashMap<String, RemotePeerInfo>();
         try {
             BufferedReader in = new BufferedReader(new FileReader("PeerInfo.cfg"));
             while((st = in.readLine()) != null) {
@@ -19,7 +20,8 @@ public class PeerInfoCfgReader {
                 //}
                 //System.out.println("tokens end ----");
 
-                peerInfoVector.addElement(new RemotePeerInfo(tokens[0], tokens[1], tokens[2]));
+                String peerId = tokens[0];
+                peerInfoMap.put(peerId, new RemotePeerInfo(peerId, tokens[1], tokens[2]));
 
             }
 
@@ -29,6 +31,7 @@ public class PeerInfoCfgReader {
             System.out.println(ex.toString());
         }
 
-        return peerInfoVector;
+        return peerInfoMap;
     }
+
 }
