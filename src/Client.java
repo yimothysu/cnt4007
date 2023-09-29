@@ -17,7 +17,7 @@ public class Client {
     void run() {
         try {
             //create a socket to connect to the server
-            requestSocket = new Socket("localhost", 8000);
+            requestSocket = new Socket("localhost", 6001);
             System.out.println("Connected to localhost in port 8000");
             //initialize inputStream and outputStream
             out = new ObjectOutputStream(requestSocket.getOutputStream());
@@ -28,11 +28,11 @@ public class Client {
             BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(System.in));
             while (true) {
                 System.out.print("Hello, please input a sentence: ");
-                //read a sentence from the standard input
+                // read a sentence from the standard input
                 message = bufferedReader.readLine();
-                //Send the sentence to the server
+                // Send the sentence to the server
                 sendMessage(message);
-                //Receive the upperCase sentence from the server
+                // Receive the upperCase sentence from the server
                 MESSAGE = (String) in.readObject();
                 //show the message to the user
                 System.out.println("Receive message: " + MESSAGE);

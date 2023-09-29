@@ -9,15 +9,18 @@
 //are no other peer s to make connection s to.
 
 import java.io.BufferedReader;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.Vector;
+import java.net.ServerSocket;
+import java.net.InetAddress;
+import java.util.HashMap;
 
 public class peerProcess {
     static String peerId;
     static BitField bitfield;
-    static Vector<RemotePeerInfo> peerInfoVector;
+    static HashMap<String, RemotePeerInfo> peerInfoMap;
+    static int index;
+
     public static void main(String[] args) throws IOException {
         if (args.length == 0) {
             System.out.println("Usage: java peerProcess [peerId]");
@@ -26,16 +29,35 @@ public class peerProcess {
         peerId = args[0];
 
         Common common = CommonCfgReader.read();
-        peerInfoVector = PeerInfoCfgReader.read();
-        readPeerInfo(common);
+        peerInfoMap = PeerInfoCfgReader.read();
+        readBitFieldFromPeerInfo(common);
 
         System.out.println(bitfield.bits);
+
+//        for (int i = 0; i < index; i++) {
+//            establishTcpConnection(i);
+//        }
+
+        System.out.println("Reached");
+
+        listenForConnections();
     }
 
-    private static void readPeerInfo(Common common) throws IOException {
+    private static void listenForConnections() throws IOException {
+        int sPort = Integer.parseInt(peerInfoMap.get(peerId).peerPort);
+        ServerSocket listener = new ServerSocket(sPort);
+        int count = 0;
+        while (true) {
+            new Handler(listener.accept(), "unknown").start();
+            count++;
+        }
+    }
+
+    private static void readBitFieldFromPeerInfo(Common common) throws IOException {
         String st;
         boolean found = false;
         BufferedReader in = new BufferedReader(new FileReader("PeerInfo.cfg"));
+        int i = 0;
         while((st = in.readLine()) != null) {
 
             String[] tokens = st.split("\\s+");
@@ -53,11 +75,23 @@ public class peerProcess {
                 } else {
                     System.out.println("Error: Corrupted Common.cfg file: last column should be 0 or 1");
                 }
+                index = i;
                 break;
             }
+            i += 1;
         }
         if (!found) {
             System.out.println("Error: Peer ID " + peerId + " not found!");
         }
+    }
+
+    private static void establishRequestConnection(String peerId) throws IOException {
+        RemotePeerInfo peerInfo = peerInfoMap.get(peerId);
+        int port = Integer.parseInt(peerInfo.peerPort);
+        int backlog = 99999999; // Maximum queue length
+        InetAddress addr = InetAddress.getByName(peerInfo.peerAddress);
+
+        ServerSocket listener = new ServerSocket(port, backlog, addr);
+        new Handler(listener.accept(), peerId).start();
     }
 }

@@ -22,7 +22,7 @@ public class StartRemotePeers {
 	
 	public void getConfiguration()
 	{
-		peerInfoVector = PeerInfoCfgReader.read();
+		peerInfoVector = new Vector<>(PeerInfoCfgReader.read().values());
 	}
 	
 	/**
