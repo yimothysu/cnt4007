@@ -21,7 +21,6 @@ public class peerProcess {
     static BitField bitfield;
     static HashMap<String, RemotePeerInfo> peerInfoMap;
     static ArrayList<String> precedingPeerIds = new ArrayList<>();
-    static HashMap<String, ObjectOutputStream> peerIdToOutputStream = new HashMap<>();
 
     public static void main(String[] args) throws IOException {
         if (args.length == 0) {
@@ -41,10 +40,6 @@ public class peerProcess {
             setUpConnection(peerId);
         }
 
-        if (!myPeerId.equals("1001")) {
-            sendMessage("1001", "hello peer 1001");
-        }
-
         System.out.println("Reached");
 
         listenForConnections();
@@ -57,10 +52,7 @@ public class peerProcess {
     private static void setUpConnection(String peerId) throws IOException {
         int sPort = Integer.parseInt(peerInfoMap.get(peerId).peerPort);
         Socket requestSocket = new Socket(peerInfoMap.get(myPeerId).peerAddress, sPort);
-        ObjectOutputStream out = new ObjectOutputStream(requestSocket.getOutputStream());
-        out.flush();
-        peerIdToOutputStream.put(peerId, out);
-        ObjectInputStream in = new ObjectInputStream(requestSocket.getInputStream());
+        new Handler(requestSocket, "UNIDENTIFIED CLIENT").start();
     }
 
     /**
@@ -70,27 +62,13 @@ public class peerProcess {
     private static void listenForConnections() throws IOException {
         int sPort = Integer.parseInt(peerInfoMap.get(myPeerId).peerPort);
         ServerSocket listener = new ServerSocket(sPort);
-        int count = 0;
         try {
             while (true) {
                 Socket clientSocket = listener.accept();
-                String clientIdentifier = "Client" + count;
-                new Handler(clientSocket, clientIdentifier).start();
-                System.out.println(clientIdentifier + " is connected!");
-                count++;
+                new Handler(clientSocket, "UNIDENTIFIED CLIENT").start();
             }
         } finally {
             listener.close();
-        }
-    }
-
-    static void sendMessage(String peerId, String msg) {
-        try {
-            //stream write the message
-            peerIdToOutputStream.get(peerId).writeObject(msg);
-            peerIdToOutputStream.get(peerId).flush();
-        } catch (IOException ioException) {
-            ioException.printStackTrace();
         }
     }
 
@@ -122,15 +100,5 @@ public class peerProcess {
         if (!found) {
             System.out.println("Error: Peer ID " + myPeerId + " not found!");
         }
-    }
-
-    private static void establishRequestConnection(String peerId) throws IOException {
-        RemotePeerInfo peerInfo = peerInfoMap.get(peerId);
-        int port = Integer.parseInt(peerInfo.peerPort);
-        int backlog = 99999999; // Maximum queue length
-        InetAddress addr = InetAddress.getByName(peerInfo.peerAddress);
-
-        ServerSocket listener = new ServerSocket(port, backlog, addr);
-        new Handler(listener.accept(), peerId).start();
     }
 }
