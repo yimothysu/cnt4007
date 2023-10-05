@@ -8,25 +8,27 @@
 //peer; it will just listen on the port 6008 as specified in the file. Being the first peer, there
 //are no other peer s to make connection s to.
 
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 import java.net.ServerSocket;
 import java.net.InetAddress;
+import java.net.*;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 
 public class peerProcess {
-    static String peerId;
+    static String myPeerId;
     static BitField bitfield;
     static HashMap<String, RemotePeerInfo> peerInfoMap;
-    static int index;
+    static ArrayList<String> precedingPeerIds = new ArrayList<>();
+    static HashMap<String, ObjectOutputStream> peerIdToOutputStream = new HashMap<>();
 
     public static void main(String[] args) throws IOException {
         if (args.length == 0) {
             System.out.println("Usage: java peerProcess [peerId]");
             return;
         }
-        peerId = args[0];
+        myPeerId = args[0];
 
         Common common = CommonCfgReader.read();
         peerInfoMap = PeerInfoCfgReader.read();
@@ -34,22 +36,61 @@ public class peerProcess {
 
         System.out.println(bitfield.bits);
 
-//        for (int i = 0; i < index; i++) {
-//            establishTcpConnection(i);
-//        }
+        System.out.println(precedingPeerIds);
+        for (String peerId : precedingPeerIds) {
+            setUpConnection(peerId);
+        }
+
+        if (!myPeerId.equals("1001")) {
+            sendMessage("1001", "hello peer 1001");
+        }
 
         System.out.println("Reached");
 
         listenForConnections();
     }
 
-    private static void listenForConnections() throws IOException {
+    /**
+     * Initialize client sockets
+     * @throws IOException
+     */
+    private static void setUpConnection(String peerId) throws IOException {
         int sPort = Integer.parseInt(peerInfoMap.get(peerId).peerPort);
+        Socket requestSocket = new Socket(peerInfoMap.get(myPeerId).peerAddress, sPort);
+        ObjectOutputStream out = new ObjectOutputStream(requestSocket.getOutputStream());
+        out.flush();
+        peerIdToOutputStream.put(peerId, out);
+        ObjectInputStream in = new ObjectInputStream(requestSocket.getInputStream());
+    }
+
+    /**
+     * Initialize server sockets
+     * @throws IOException
+     */
+    private static void listenForConnections() throws IOException {
+        int sPort = Integer.parseInt(peerInfoMap.get(myPeerId).peerPort);
         ServerSocket listener = new ServerSocket(sPort);
         int count = 0;
-        while (true) {
-            new Handler(listener.accept(), "unknown").start();
-            count++;
+        try {
+            while (true) {
+                Socket clientSocket = listener.accept();
+                String clientIdentifier = "Client" + count;
+                new Handler(clientSocket, clientIdentifier).start();
+                System.out.println(clientIdentifier + " is connected!");
+                count++;
+            }
+        } finally {
+            listener.close();
+        }
+    }
+
+    static void sendMessage(String peerId, String msg) {
+        try {
+            //stream write the message
+            peerIdToOutputStream.get(peerId).writeObject(msg);
+            peerIdToOutputStream.get(peerId).flush();
+        } catch (IOException ioException) {
+            ioException.printStackTrace();
         }
     }
 
@@ -57,13 +98,12 @@ public class peerProcess {
         String st;
         boolean found = false;
         BufferedReader in = new BufferedReader(new FileReader("PeerInfo.cfg"));
-        int i = 0;
         while((st = in.readLine()) != null) {
 
             String[] tokens = st.split("\\s+");
 
             String rowPeerId = tokens[0];
-            if (rowPeerId.equals(peerId)) {
+            if (rowPeerId.equals(myPeerId)) {
                 found = true;
 
                 int bitfieldSize = Math.ceilDiv(common.fileSizeInBytes(), common.pieceSizeInBytes());
@@ -75,13 +115,12 @@ public class peerProcess {
                 } else {
                     System.out.println("Error: Corrupted Common.cfg file: last column should be 0 or 1");
                 }
-                index = i;
                 break;
             }
-            i += 1;
+            precedingPeerIds.add(rowPeerId);
         }
         if (!found) {
-            System.out.println("Error: Peer ID " + peerId + " not found!");
+            System.out.println("Error: Peer ID " + myPeerId + " not found!");
         }
     }
 

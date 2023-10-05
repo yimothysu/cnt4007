@@ -1,14 +1,14 @@
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.util.HashMap;
-import java.util.Vector;
+import java.util.LinkedHashMap;
 
 public class PeerInfoCfgReader {
-    public static HashMap<String, RemotePeerInfo> read()
+    public static LinkedHashMap<String, RemotePeerInfo> read()
     {
         String st;
         int i1;
-        HashMap<String, RemotePeerInfo> peerInfoMap = new HashMap<String, RemotePeerInfo>();
+        LinkedHashMap<String, RemotePeerInfo> peerInfoMap = new LinkedHashMap<String, RemotePeerInfo>();
         try {
             BufferedReader in = new BufferedReader(new FileReader("PeerInfo.cfg"));
             while((st = in.readLine()) != null) {
