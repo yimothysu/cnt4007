@@ -52,7 +52,7 @@ public class peerProcess {
     private static void setUpConnection(String peerId) throws IOException {
         int sPort = Integer.parseInt(peerInfoMap.get(peerId).peerPort);
         Socket requestSocket = new Socket(peerInfoMap.get(myPeerId).peerAddress, sPort);
-        new Handler(requestSocket, "UNIDENTIFIED CLIENT").start();
+        new Handler(requestSocket, myPeerId, peerId, bitfield).start();
     }
 
     /**
@@ -61,14 +61,11 @@ public class peerProcess {
      */
     private static void listenForConnections() throws IOException {
         int sPort = Integer.parseInt(peerInfoMap.get(myPeerId).peerPort);
-        ServerSocket listener = new ServerSocket(sPort);
-        try {
+        try (ServerSocket listener = new ServerSocket(sPort)) {
             while (true) {
                 Socket clientSocket = listener.accept();
-                new Handler(clientSocket, "UNIDENTIFIED CLIENT").start();
+                new Handler(clientSocket, myPeerId, "UNIDENTIFIED CLIENT", bitfield).start();
             }
-        } finally {
-            listener.close();
         }
     }
 

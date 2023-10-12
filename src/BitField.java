@@ -22,4 +22,28 @@ public class BitField {
         }
         return new BitField(ones);
     }
+
+    public boolean isEmpty() {
+        for (Boolean bit : bits ) {
+            if (bit) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public byte[] toByteArray() {
+        int size = bits.size();
+        int byteLength = (size + 7) / 8; // Round up to nearest byte
+        byte[] byteArray = new byte[byteLength];
+
+        for (int i = 0; i < size; i++) {
+            if (bits.get(i)) {
+                byteArray[i / 8] |= (byte) (1 << (7 - (i % 8)));
+            }
+        }
+
+        return byteArray;
+    }
+
 }
