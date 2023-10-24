@@ -1,40 +1,48 @@
-//Then the peer process starts and reads the file
-//Common.cfg to set the corresponding
-//variables. The peer process also reads the file PeerInfo.cfg . It will find that the [has file
-//or not] fie ld is 1, which means it has the complete file, it sets all the bits of its bitfield to
-//be 1. (On the other hand, if the [has file or not] field is 0, it sets all the bits of its bitfield
-//to 0.) Here the bitfield is a data structure where your peer process manages the pieces.
-//You have the freedom in how to implement it. This peer also finds out that it is the first
-//peer; it will just listen on the port 6008 as specified in the file. Being the first peer, there
-//are no other peer s to make connection s to.
-
 import java.io.*;
 import java.net.ServerSocket;
-import java.net.InetAddress;
-import java.net.*;
+import java.net.Socket;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 
+/**
+ * The peerProcess class is the entry point for each peer in the network.
+ * It is responsible for establishing connections and handling data transfers.
+ */
 public class peerProcess {
+
     static String myPeerId;
     static BitField bitfield;
     static HashMap<String, RemotePeerInfo> peerInfoMap;
+    static PeerData peerData;
+
+    // An array list to store the IDs of peers that precede this peer
     static ArrayList<String> precedingPeerIds = new ArrayList<>();
 
+    /**
+     * The main method initializes connections and listens for incoming connections.
+     *
+     * @param args Command line arguments; expects the peer ID as the first argument.
+     * @throws IOException If an I/O error occurs.
+     */
     public static void main(String[] args) throws IOException {
+
+        // Validate that the peer ID is provided as a command line argument
         if (args.length == 0) {
             System.out.println("Usage: java peerProcess [peerId]");
             return;
         }
-        myPeerId = args[0];
 
+        // Initialize variables based on the command line arguments and configuration files
+        myPeerId = args[0];
         Common common = CommonCfgReader.read();
         peerInfoMap = PeerInfoCfgReader.read();
         readBitFieldFromPeerInfo(common);
 
         System.out.println(bitfield.bits);
 
+        peerData = new PeerData();
+
+        // Establish connections with peers that precede this one in the network
         System.out.println(precedingPeerIds);
         for (String peerId : precedingPeerIds) {
             setUpConnection(peerId);
@@ -42,60 +50,69 @@ public class peerProcess {
 
         System.out.println("Reached");
 
+        // Listen for incoming connections
         listenForConnections();
     }
 
     /**
-     * Initialize client sockets
-     * @throws IOException
+     * Establishes a connection with a specified peer.
+     * Initializes a new Handler thread for the connection.
+     *
+     * @param peerId The ID of the peer to connect to.
+     * @throws IOException If an I/O error occurs.
      */
     private static void setUpConnection(String peerId) throws IOException {
         int sPort = Integer.parseInt(peerInfoMap.get(peerId).peerPort);
         Socket requestSocket = new Socket(peerInfoMap.get(myPeerId).peerAddress, sPort);
-        new Handler(requestSocket, myPeerId, peerId, bitfield).start();
+        new Handler(requestSocket, myPeerId, peerId, bitfield, peerData).start();
     }
 
     /**
-     * Initialize server sockets
-     * @throws IOException
+     * Initializes a server socket to listen for incoming connections.
+     * Spawns a new Handler thread for each connection.
+     *
+     * @throws IOException If an I/O error occurs.
      */
     private static void listenForConnections() throws IOException {
         int sPort = Integer.parseInt(peerInfoMap.get(myPeerId).peerPort);
         try (ServerSocket listener = new ServerSocket(sPort)) {
             while (true) {
                 Socket clientSocket = listener.accept();
-                new Handler(clientSocket, myPeerId, "UNIDENTIFIED CLIENT", bitfield).start();
+                new Handler(clientSocket, myPeerId, "UNIDENTIFIED CLIENT", bitfield, peerData).start();
             }
         }
     }
 
+    /**
+     * Reads the bitfield information from PeerInfo.cfg and initializes the bitfield variable.
+     * Also populates the precedingPeerIds list.
+     *
+     * @param common The Common configuration object.
+     * @throws IOException If an I/O error occurs.
+     */
     private static void readBitFieldFromPeerInfo(Common common) throws IOException {
-        String st;
-        boolean found = false;
-        BufferedReader in = new BufferedReader(new FileReader("PeerInfo.cfg"));
-        while((st = in.readLine()) != null) {
+        try (BufferedReader in = new BufferedReader(new FileReader("PeerInfo.cfg"))) {
+            String line;
+            boolean isPeerFound = false;
 
-            String[] tokens = st.split("\\s+");
+            while ((line = in.readLine()) != null) {
+                String[] tokens = line.split("\\s+");
+                String rowPeerId = tokens[0];
 
-            String rowPeerId = tokens[0];
-            if (rowPeerId.equals(myPeerId)) {
-                found = true;
+                if (rowPeerId.equals(myPeerId)) {
+                    isPeerFound = true;
 
-                int bitfieldSize = Math.ceilDiv(common.fileSizeInBytes(), common.pieceSizeInBytes());
-                String hasFileField = tokens[3]; // "1" if present, "0" if not
-                if (hasFileField.equals("1")) {
-                    bitfield = BitField.ones(bitfieldSize);
-                } else if (hasFileField.equals("0")) {
-                    bitfield = BitField.zeros(bitfieldSize);
-                } else {
-                    System.out.println("Error: Corrupted Common.cfg file: last column should be 0 or 1");
+                    // Compute the bitfield size and initialize the bitfield
+                    int bitfieldSize = Math.ceilDiv(common.fileSizeInBytes(), common.pieceSizeInBytes());
+                    bitfield = "1".equals(tokens[3]) ? BitField.ones(bitfieldSize) : BitField.zeros(bitfieldSize);
+                    break;
                 }
-                break;
+                precedingPeerIds.add(rowPeerId);
             }
-            precedingPeerIds.add(rowPeerId);
-        }
-        if (!found) {
-            System.out.println("Error: Peer ID " + myPeerId + " not found!");
+
+            if (!isPeerFound) {
+                System.out.println("Error: Peer ID " + myPeerId + " not found!");
+            }
         }
     }
 }
