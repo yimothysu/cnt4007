@@ -27,3 +27,6 @@ bin/
 
 ### Mac OS ###
 .DS_Store
+
+### haha why is this not here there is probably a good reason but they are so much clutter ###
+*.class
