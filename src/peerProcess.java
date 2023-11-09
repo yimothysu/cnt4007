@@ -3,6 +3,9 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 /**
  * The peerProcess class is the entry point for each peer in the network.
@@ -14,9 +17,12 @@ public class peerProcess {
     static BitField bitfield;
     static HashMap<String, RemotePeerInfo> peerInfoMap;
     static PeerData peerData;
+    static Common common;
 
     // An array list to store the IDs of peers that precede this peer
     static ArrayList<String> precedingPeerIds = new ArrayList<>();
+
+    static HashMap<String, Handler> peerHandlers;
 
     /**
      * The main method initializes connections and listens for incoming connections.
@@ -34,13 +40,14 @@ public class peerProcess {
 
         // Initialize variables based on the command line arguments and configuration files
         myPeerId = args[0];
-        Common common = CommonCfgReader.read();
+        common = CommonCfgReader.read();
         peerInfoMap = PeerInfoCfgReader.read();
         readBitFieldFromPeerInfo(common);
 
         System.out.println(bitfield.bits);
 
         peerData = new PeerData();
+        peerHandlers = new HashMap<>();
 
         // Establish connections with peers that precede this one in the network
         System.out.println(precedingPeerIds);
@@ -48,7 +55,32 @@ public class peerProcess {
             setUpConnection(peerId);
         }
 
-        System.out.println("Reached");
+        // Set up scheduled task
+        // Select preferred neighbors every K seconds
+        ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
+
+        Runnable selectPreferredTask = () -> {
+            PeerData.NeighborSelectionData neighborSelectionData
+                    = peerData.randomlySelectPreferredNeighbors(common.numberOfPreferredNeighbors());
+            for (String peerId : neighborSelectionData.toChoke()) {
+                // TODO: send choke msg to peer [peerId]
+                // peerHandlers.get(peerId).sendChokeMessage();
+            }
+            for (String peerId : neighborSelectionData.toUnchoke()) {
+                // TODO: send unchoke msg to peer [peerId]
+                // peerHandlers.get(peerId).sendUnchokeMessage();
+            }
+        };
+        // Schedules the task, following the initial delay of 2 seconds.
+        executor.scheduleAtFixedRate(selectPreferredTask, 2, common.unchokingIntervalInSeconds(), TimeUnit.SECONDS);
+
+        Runnable selectOptUnchoked = () -> {
+            String peerOptUnchoked = peerData.selectOptimisticallyUnchokedNeighbor();
+            // TODO: send unchoke msg to peer [peerOptUnchoked]
+        };
+        // Schedules the task, following the initial delay of 2 seconds.
+        executor.scheduleAtFixedRate(selectOptUnchoked, 2, common.optimisticUnchokingIntervalInSeconds(), TimeUnit.SECONDS);
+
 
         // Listen for incoming connections
         listenForConnections();
@@ -64,7 +96,9 @@ public class peerProcess {
     private static void setUpConnection(String peerId) throws IOException {
         int sPort = Integer.parseInt(peerInfoMap.get(peerId).peerPort);
         Socket requestSocket = new Socket(peerInfoMap.get(myPeerId).peerAddress, sPort);
-        new Handler(requestSocket, myPeerId, peerId, bitfield, peerData).start();
+        Handler handler = new Handler(requestSocket, myPeerId, peerId, bitfield, peerData);
+        handler.start();
+        peerHandlers.put(peerId, handler);
     }
 
     /**
@@ -78,7 +112,11 @@ public class peerProcess {
         try (ServerSocket listener = new ServerSocket(sPort)) {
             while (true) {
                 Socket clientSocket = listener.accept();
-                new Handler(clientSocket, myPeerId, "UNIDENTIFIED CLIENT", bitfield, peerData).start();
+                Handler handler = new Handler(clientSocket, myPeerId, "UNIDENTIFIED CLIENT", bitfield, peerData);
+                handler.setCallback((String peerId) -> {
+                    peerHandlers.put(peerId, handler);
+                });
+                handler.start();
             }
         }
     }

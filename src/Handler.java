@@ -6,6 +6,7 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Map;
+import java.util.function.Consumer;
 
 /**
  * A handler thread class.  Handlers are spawned from the listening
@@ -21,12 +22,18 @@ class Handler extends Thread {
 
     private PeerData peerData;
 
+    private Consumer<String> peerIdCallback = null;
+
     public Handler(Socket connection, String myPeerId, String peerId, BitField bitfield, PeerData peerData) {
         this.connection = connection;
         this.peerId = peerId;
         this.myPeerId = myPeerId;
         this.bitfield = bitfield;
         this.peerData = peerData;
+    }
+
+    public void setCallback(Consumer<String> peerIdCallback) {
+        this.peerIdCallback = peerIdCallback;
     }
 
     // The handshake header is 18-byte string
@@ -187,6 +194,9 @@ class Handler extends Thread {
         String header = new String(msg, 0, 18);
         int peerId = ByteBuffer.wrap(msg, 28, 4).getInt();
         this.peerId = Integer.toString(peerId);
+        if (peerIdCallback != null) {
+            peerIdCallback.accept(this.peerId);
+        }
 
         // Check if the received header matches the expected header
         if ("P2PFILESHARINGPROJ".equals(header)) {
@@ -241,7 +251,7 @@ class Handler extends Thread {
     // This method will be called when a 'bitfield' message is received from the peer.
     private void rcvBitfield(byte[] msg) {
         System.out.println("Received bitfield from peer " + peerId);
-        System.out.println(msg);
+        System.out.println(Arrays.toString(msg));
 
         // Store the received bitfield in peerData
         peerData.peerDataByName.put(peerId, new PeerDatum(bitfield));
@@ -251,7 +261,6 @@ class Handler extends Thread {
         for (Map.Entry<String, PeerDatum> entry : peerData.peerDataByName.entrySet()) {
             String key = entry.getKey();
             PeerDatum value = entry.getValue();
-            System.out.println(key + ": " + value);
         }
     }
 
