@@ -283,7 +283,7 @@ class Handler extends Thread {
     // ‘have’ messages have a payload that contains a 4-byte piece index field
     private void rcvHave(byte[] msg) {
         int pieceIndex = ByteConverter.fromByteArray(msg);
-        Logzzzzz.log("Peer " + myPeerId + " received the 'have' message from peer " + peerId + " for the piece " + pieceIndex + ".");
+        Logzzzzz.log("Peer " + myPeerId + " received the 'have' message from peer " + peerId + " for piece " + pieceIndex + ".");
 
         boolean interestedBefore = myBitField.interestedIn(getPeer(peerId).bitField);
         getPeer(peerId).bitField.setBit(pieceIndex, true);
@@ -365,9 +365,9 @@ class Handler extends Thread {
             String key = entry.getKey();
             PeerDatum value = entry.getValue();
 
-            value.bitField.setBit(pieceIndex, false);
+            myBitField.setBit(pieceIndex, false);
             boolean interestedBefore = myBitField.interestedIn(value.bitField);
-            value.bitField.setBit(pieceIndex, true);
+            myBitField.setBit(pieceIndex, true);
             boolean interestedAfter = myBitField.interestedIn(value.bitField);
 
 
@@ -414,9 +414,18 @@ class Handler extends Thread {
             System.out.println("My bitfield is not all ones");
             return;
         }
+
         for (PeerDatum peerDatum : peerData.peerDataByName.values()) {
             if (!peerDatum.bitField.allOnes()) {
-                System.out.println("Peer " + peerDatum. + " does not have all pieces");
+                System.out.println("Peer " + peerDatum + " does not have all pieces");
+                // return; TODO
+            }
+        }
+        for (String peerName : peerData.peerDataByName.keySet()) {
+            PeerDatum peersDatum = peerData.peerDataByName.get(peerName);
+            if (!peersDatum.bitField.allOnes()) {
+                System.out.println("Peer " + peerName + " does not have all pieces");
+                System.out.println("Their bitfield is " + peersDatum.bitField.bits);
                 return;
             }
         }

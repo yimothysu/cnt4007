@@ -66,7 +66,7 @@ public class BitField {
 
     public static BitField fromByteArray(byte[] byteArray) {
         ArrayList<Boolean> bits = new ArrayList<>();
-        for (int i = 0; i < byteArray.length * 8; i++) {
+        for (int i = 0; i < PieceManager.bitfieldSize; i++) {
             int byteIndex = i / 8;
             int bitIndex = 7 - (i % 8);
             boolean bit = (byteArray[byteIndex] & (1 << bitIndex)) != 0;
