@@ -1,10 +1,18 @@
 import java.util.ArrayList;
 
 public class BitField {
-    final ArrayList<Boolean> bits;
+    ArrayList<Boolean> bits;
 
     public BitField(ArrayList<Boolean> bits) {
         this.bits = bits;
+    }
+
+    public void setBitField(ArrayList<Boolean> bits) {
+        this.bits = bits;
+    }
+
+    public ArrayList<Boolean> getBitfield() {
+        return this.bits;
     }
 
     public static BitField zeros(int size) {
@@ -32,6 +40,14 @@ public class BitField {
         return true;
     }
 
+    public boolean getBit(int index) {
+        return bits.get(index);
+    }
+
+    public void setBit(int index, boolean value) {
+        bits.set(index, value);
+    }
+
     public byte[] toByteArray() {
         int size = bits.size();
         int byteLength = (size + 7) / 8; // Round up to nearest byte
@@ -46,4 +62,24 @@ public class BitField {
         return byteArray;
     }
 
+    public static BitField fromByteArray(byte[] byteArray) {
+        ArrayList<Boolean> bits = new ArrayList<>();
+        for (int i = 0; i < byteArray.length * 8; i++) {
+            int byteIndex = i / 8;
+            int bitIndex = 7 - (i % 8);
+            boolean bit = (byteArray[byteIndex] & (1 << bitIndex)) != 0;
+            bits.add(bit);
+        }
+        return new BitField(bits);
+    }
+    
+    // Returns true if the other bitfield contains a bit that this bitfield does not.
+    public boolean interestedIn(BitField other) {
+        for (int i = 0; i < bits.size(); i++) {
+            if (!bits.get(i) && other.bits.get(i)) {
+                return true;
+            }
+        }
+        return false;
+    }
 }

@@ -53,5 +53,4 @@ public class ByteConverter {
 
         return result;
     }
-
 }

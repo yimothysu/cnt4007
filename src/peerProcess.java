@@ -14,7 +14,7 @@ import java.util.concurrent.TimeUnit;
 public class peerProcess {
 
     static String myPeerId;
-    static BitField bitfield;
+    static BitField myBitField;
     static HashMap<String, RemotePeerInfo> peerInfoMap;
     static PeerData peerData;
     static Common common;
@@ -31,7 +31,6 @@ public class peerProcess {
      * @throws IOException If an I/O error occurs.
      */
     public static void main(String[] args) throws IOException {
-
         // Validate that the peer ID is provided as a command line argument
         if (args.length == 0) {
             System.out.println("Usage: java peerProcess [peerId]");
@@ -40,11 +39,12 @@ public class peerProcess {
 
         // Initialize variables based on the command line arguments and configuration files
         myPeerId = args[0];
+        createPeerDirectory(myPeerId);
+
+        Logzzzzz.initWithPeerId(myPeerId);
         common = CommonCfgReader.read();
         peerInfoMap = PeerInfoCfgReader.read();
         readBitFieldFromPeerInfo(common);
-
-        System.out.println(bitfield.bits);
 
         peerData = new PeerData();
         peerHandlers = new HashMap<>();
@@ -55,28 +55,53 @@ public class peerProcess {
             setUpConnection(peerId);
         }
 
-        // Set up scheduled task
         // Select preferred neighbors every K seconds
         ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
-
         Runnable selectPreferredTask = () -> {
             PeerData.NeighborSelectionData neighborSelectionData
                     = peerData.randomlySelectPreferredNeighbors(common.numberOfPreferredNeighbors());
+
+            // TODO
+            String serializedNeighborsListForLogging = "";
+            String delimiter = "";
+            for (String str : neighborSelectionData.toChoke()) {
+                System.out.println("Continuing(c)");
+                serializedNeighborsListForLogging += delimiter + str;
+                delimiter = ",";
+            }
+            for (String str : neighborSelectionData.toUnchoke()) {
+                System.out.println("Continuing(u)");
+                serializedNeighborsListForLogging += delimiter + str;
+                delimiter = ",";
+            }
+            Logzzzzz.log("Peer " + myPeerId + " has the preferred neighbors " + serializedNeighborsListForLogging);
+
             for (String peerId : neighborSelectionData.toChoke()) {
-                // TODO: send choke msg to peer [peerId]
-                // peerHandlers.get(peerId).sendChokeMessage();
+                getPeerHandler(peerId).sendMessage(MsgType.CHOKE);
+                System.out.println("Choking: " + peerId);
             }
             for (String peerId : neighborSelectionData.toUnchoke()) {
-                // TODO: send unchoke msg to peer [peerId]
-                // peerHandlers.get(peerId).sendUnchokeMessage();
+                getPeerHandler(peerId).sendMessage(MsgType.UNCHOKE);
+                System.out.println("Unchoking: " + peerId);
+            }
+
+            for (PeerDatum peerDatum : peerData) {
+                peerDatum.resetDownloadData();
             }
         };
-        // Schedules the task, following the initial delay of 2 seconds.
+        // Schedules the task, following the initial delay of 2 seconds (arbitrarily chosen).
         executor.scheduleAtFixedRate(selectPreferredTask, 2, common.unchokingIntervalInSeconds(), TimeUnit.SECONDS);
 
+
+        // Select optimistically unchoked neighbor every U seconds
         Runnable selectOptUnchoked = () -> {
             String peerOptUnchoked = peerData.selectOptimisticallyUnchokedNeighbor();
-            // TODO: send unchoke msg to peer [peerOptUnchoked]
+            System.out.println("Optimistically unchoked: " + peerOptUnchoked);
+
+//            if (peerOptUnchoked != null) {
+            System.out.println("getPeerHandler(peerOptUnchoked) " + getPeerHandler(peerOptUnchoked));
+                getPeerHandler(peerOptUnchoked).sendMessage(MsgType.UNCHOKE);
+//            }
         };
         // Schedules the task, following the initial delay of 2 seconds.
         executor.scheduleAtFixedRate(selectOptUnchoked, 2, common.optimisticUnchokingIntervalInSeconds(), TimeUnit.SECONDS);
@@ -84,6 +109,15 @@ public class peerProcess {
 
         // Listen for incoming connections
         listenForConnections();
+    }
+
+    public static void createPeerDirectory(String peerId) {
+        File dir = new File(System.getProperty("user.dir") + File.separator + ".." + File.separator + "peer_" + peerId);
+        if (!dir.exists()) dir.mkdirs();
+    }
+
+    public static Handler getPeerHandler(String peer) {
+        return peerHandlers.get(peer);
     }
 
     /**
@@ -96,9 +130,10 @@ public class peerProcess {
     private static void setUpConnection(String peerId) throws IOException {
         int sPort = Integer.parseInt(peerInfoMap.get(peerId).peerPort);
         Socket requestSocket = new Socket(peerInfoMap.get(myPeerId).peerAddress, sPort);
-        Handler handler = new Handler(requestSocket, myPeerId, peerId, bitfield, peerData);
+        Handler handler = new Handler(requestSocket, myPeerId, peerId, myBitField, peerData);
         handler.start();
         peerHandlers.put(peerId, handler);
+        Logzzzzz.log("Peer " + myPeerId + " makes a connection to Peer " + peerId + ".");
     }
 
     /**
@@ -112,11 +147,13 @@ public class peerProcess {
         try (ServerSocket listener = new ServerSocket(sPort)) {
             while (true) {
                 Socket clientSocket = listener.accept();
-                Handler handler = new Handler(clientSocket, myPeerId, "UNIDENTIFIED CLIENT", bitfield, peerData);
+                Handler handler = new Handler(clientSocket, myPeerId, "UNIDENTIFIED CLIENT", myBitField, peerData);
                 handler.setCallback((String peerId) -> {
                     peerHandlers.put(peerId, handler);
+                    Logzzzzz.log("Peer " + myPeerId + " makes a connection to Peer " + peerId + ".");
                 });
                 handler.start();
+
             }
         }
     }
@@ -142,7 +179,7 @@ public class peerProcess {
 
                     // Compute the bitfield size and initialize the bitfield
                     int bitfieldSize = Math.ceilDiv(common.fileSizeInBytes(), common.pieceSizeInBytes());
-                    bitfield = "1".equals(tokens[3]) ? BitField.ones(bitfieldSize) : BitField.zeros(bitfieldSize);
+                    myBitField = "1".equals(tokens[3]) ? BitField.ones(bitfieldSize) : BitField.zeros(bitfieldSize);
                     break;
                 }
                 precedingPeerIds.add(rowPeerId);

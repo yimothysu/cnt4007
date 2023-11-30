@@ -2,9 +2,7 @@ import java.util.*;
 
 public class PeerData {
     public HashMap<String, PeerDatum> peerDataByName = new HashMap<>();
-
-    private Random rand = new Random();
-
+    private Random rand = new Random("haha".hashCode());
 
     public record NeighborSelectionData(List<String> toChoke, List<String> toUnchoke) {
     }
@@ -23,7 +21,7 @@ public class PeerData {
         }
 
         // 2
-        int removeCount = interestedPeers.size() - preferredNeighborCount;
+        int removeCount = Math.max(0, interestedPeers.size() - preferredNeighborCount);
         for (int i = 0; i < removeCount; i++) {
             interestedPeers.remove(rand.nextInt(interestedPeers.size()));
         }
@@ -35,6 +33,7 @@ public class PeerData {
         // Reset all peers that were optimistically unchoked
         peerDataByName.forEach((key, peer) -> {
             if (peer.isOptUnchoked()) {
+                peer.resetOptimisticallyUnchoked();
             }
         });
 
@@ -43,6 +42,13 @@ public class PeerData {
                 .filter(entry -> entry.getValue().interested && entry.getValue().isChoked())
                 .map(Map.Entry::getKey)
                 .toList();
+        // print every peer and whether they are interested or not and choked or not
+        // Print status of each peer
+        peerDataByName.forEach((key, peer) -> {
+            String interestStatus = peer.interested ? "Interested" : "Not Interested";
+            String chokeStatus = peer.isChoked() ? "Choked" : "Unchoked";
+            System.out.println("Peer " + key + ": " + interestStatus + ", " + chokeStatus);
+        });
 
         // If there are no interested and choked peers, return null
         if (interestedAndChokedPeers.isEmpty()) {
@@ -50,17 +56,20 @@ public class PeerData {
         }
 
         // Randomly select one peer from the list
-        return interestedAndChokedPeers.get(rand.nextInt(interestedAndChokedPeers.size()));
+        String peerToOptUnchoke =
+                interestedAndChokedPeers.get(rand.nextInt(interestedAndChokedPeers.size()));
+        peerDataByName.get(peerToOptUnchoke).admit();
+        return peerToOptUnchoke;
     }
 
-    private NeighborSelectionData selectPreferredNeighbors(Set<PeerDatum> preferredNeighbors) {
+    private NeighborSelectionData selectPreferredNeighbors(Set<PeerDatum> neighborToMakePreferred) {
         List<String> toChoke = new ArrayList<>();
         List<String> toUnchoke = new ArrayList<>();
-        System.out.println( peerDataByName.entrySet());
+
         for (Map.Entry<String, PeerDatum> entry : peerDataByName.entrySet()) {
             String peerId = entry.getKey();
             PeerDatum peer = entry.getValue();
-            if (preferredNeighbors.contains(peer)) {
+            if (neighborToMakePreferred.contains(peer)) {
                 if (peer.isChoked()) {
                     toUnchoke.add(peerId);
                     peer.prefer();
@@ -75,6 +84,7 @@ public class PeerData {
                 }
             }
         }
+
         return new NeighborSelectionData(toChoke, toUnchoke);
     }
 }
