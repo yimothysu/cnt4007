@@ -12,7 +12,8 @@ public class PeerDatum {
     private boolean theyBeChokingUs;
 
     public PeerDatum() {
-        this.bitField = new BitField(new ArrayList<>());
+        assert PieceManager.bitfieldSize != 0;
+        this.bitField = BitField.zeros(PieceManager.bitfieldSize);
         this.interested = false;
         this.optUnchoked = false;
         this.preferred = false;
@@ -71,6 +72,9 @@ public class PeerDatum {
     }
 
     public float getDownloadSpeed() {
+        if (totalDownloadTimeMs == 0) {
+            return 0;
+        }
         return (float) totalDownloadSizeB / totalDownloadTimeMs;
     }
 }

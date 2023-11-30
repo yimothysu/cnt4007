@@ -1,6 +1,8 @@
 import java.util.ArrayList;
+import java.util.Random;
 
 public class BitField {
+    private static Random rand = new Random("haha".hashCode());
     ArrayList<Boolean> bits;
 
     public BitField(ArrayList<Boolean> bits) {
@@ -74,12 +76,40 @@ public class BitField {
     }
     
     // Returns true if the other bitfield contains a bit that this bitfield does not.
-    public boolean interestedIn(BitField other) {
+    // Helper method to get indices where this bitfield is false and other is true
+    private ArrayList<Integer> getInterestedIndices(BitField other) {
+        ArrayList<Integer> indices = new ArrayList<>();
         for (int i = 0; i < bits.size(); i++) {
             if (!bits.get(i) && other.bits.get(i)) {
-                return true;
+                indices.add(i);
             }
         }
-        return false;
+        return indices;
+    }
+
+    public boolean interestedIn(BitField other) {
+        return !getInterestedIndices(other).isEmpty();
+    }
+
+    public int chooseRandomPieceToRequest(BitField other) {
+        ArrayList<Integer> indices = getInterestedIndices(other);
+        if (!indices.isEmpty()) {
+            return indices.get(rand.nextInt(indices.size()));
+        }
+        throw new IllegalStateException("No pieces to request.");
+    }
+
+    public int getNumPieces() {
+        int numPieces = 0;
+        for (int i = 0; i < bits.size(); i++) {
+            if (bits.get(i)) {
+                numPieces++;
+            }
+        }
+        return numPieces;
+    }
+
+    public boolean allOnes() {
+        return getNumPieces() == bits.size();
     }
 }

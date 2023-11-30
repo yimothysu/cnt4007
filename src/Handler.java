@@ -4,6 +4,7 @@ import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -16,13 +17,14 @@ class Handler extends Thread {
     private Socket connection;
     private ObjectInputStream in;    //stream read from the socket
     private ObjectOutputStream out;    //stream write to the socket
-    private String myPeerId; // Peer ID of sender
-    private String peerId;        //The peer id of the client
+    private String myPeerId; // My ID
+    private String peerId;  // The ID of the peer this Handler handles
     private BitField myBitField;
 
     private PeerData peerData;
 
     private Consumer<String> peerIdCallback = null;
+    private Consumer<BroadcastCallbackArguments> broadcastCallback = null;
 
     public Handler(Socket connection, String myPeerId, String peerId, BitField myBitField, PeerData peerData) {
         this.connection = connection;
@@ -36,8 +38,12 @@ class Handler extends Thread {
         return peerData.peerDataByName.get(peerId);
     }
 
-    public void setCallback(Consumer<String> peerIdCallback) {
+    public void setPeerIdCallback(Consumer<String> peerIdCallback) {
         this.peerIdCallback = peerIdCallback;
+    }
+
+    public void setBroadcastCallback(Consumer<BroadcastCallbackArguments> broadcastCallback) {
+        this.broadcastCallback = broadcastCallback;
     }
 
     // The handshake header is 18-byte string
@@ -166,16 +172,16 @@ class Handler extends Thread {
         System.out.println("Parsed type is " + parsed.type);
         switch (parsed.type) {
             case 0:
-                rcvChoke(contents);
+                rcvChoke();
                 break;
             case 1:
-                rcvUnchoke(contents);
+                rcvUnchoke();
                 break;
             case 2:
-                rcvInterested(contents);
+                rcvInterested();
                 break;
             case 3:
-                rcvNotInterested(contents);
+                rcvNotInterested();
                 break;
             case 4:
                 rcvHave(contents);
@@ -237,30 +243,37 @@ class Handler extends Thread {
 
     // Handle a received 'choke' message.
     // This method will be called when a 'choke' message is received from the peer.
-    private void rcvChoke(byte[] msg) {
+    private void rcvChoke() {
         // Add your code here to handle the 'choke' message.
         getPeer(peerId).theyAreChokingUs();
-        System.out.println("Received choke from peer " + peerId);
+        Logzzzzz.log("Peer " + myPeerId + " is choked by " + peerId + ".");
     }
 
     // Handle a received 'unchoke' message.
     // This method will be called when an 'unchoke' message is received from the peer.
-    private void rcvUnchoke(byte[] msg) {
-        // Add your code here to handle the 'unchoke' message.
+    private void rcvUnchoke() {
         getPeer(peerId).theyAreNoLongerChokingUs();
         System.out.println("Received unchoke from peer " + peerId);
+        Logzzzzz.log("Peer " + myPeerId + " is unchoked by " + peerId + ".");
+
+        // If we are interested in the peer, send a 'request' message
+        if (myBitField.interestedIn(getPeer(peerId).bitField)) {
+            int pieceToRequest = myBitField.chooseRandomPieceToRequest(getPeer(peerId).bitField);
+            sendMessage(MsgType.REQUEST, ByteBuffer.allocate(4).putInt(pieceToRequest).array());
+            System.out.println("Sent request for piece " + pieceToRequest + " to peer " + peerId);
+        }
     }
 
     // Handle a received 'interested' message.
     // This method will be called when an 'interested' message is received from the peer.
-    private void rcvInterested(byte[] msg) {
+    private void rcvInterested() {
         getPeer(peerId).interested = true;
         Logzzzzz.log("Peer " + myPeerId + " received the 'interested' message from peer " + peerId + ".");
     }
 
     // Handle a received 'not interested' message.
     // This method will be called when a 'not interested' message is received from the peer.
-    private void rcvNotInterested(byte[] msg) {
+    private void rcvNotInterested() {
         getPeer(peerId).interested = false;
         Logzzzzz.log("Peer " + myPeerId + " received the 'not interested' message from peer " + peerId + ".");
     }
@@ -270,21 +283,22 @@ class Handler extends Thread {
     // ‘have’ messages have a payload that contains a 4-byte piece index field
     private void rcvHave(byte[] msg) {
         int pieceIndex = ByteConverter.fromByteArray(msg);
-        getPeer(peerId).bitField.setBit(pieceIndex, true);
-
         Logzzzzz.log("Peer " + myPeerId + " received the 'have' message from peer " + peerId + " for the piece " + pieceIndex + ".");
 
-        if (getPeer(myPeerId).bitField.getBit(pieceIndex)) {
+        boolean interestedBefore = myBitField.interestedIn(getPeer(peerId).bitField);
+        getPeer(peerId).bitField.setBit(pieceIndex, true);
+        boolean interestedAfter = myBitField.interestedIn(getPeer(peerId).bitField);
+
+        if (!interestedBefore && interestedAfter) {
             sendMessage(MsgType.INTERESTED);
         }
+
+        checkForTermination();
     }
 
     // Handle a received 'bitfield' message.
     // This method will be called when a 'bitfield' message is received from the peer.
     private void rcvBitfield(byte[] msg) {
-        System.out.println("Received bitfield from peer " + peerId);
-        System.out.println(Arrays.toString(msg));
-
         // Convert the received byte array to a BitField and store it
         BitField receivedBitfield = BitField.fromByteArray(msg);
         getPeer(peerId).bitField.setBitField(receivedBitfield.getBitfield());
@@ -313,17 +327,102 @@ class Handler extends Thread {
 
     // Handle a received 'request' message.
     // This method will be called when a 'request' message is received from the peer.
+    // Break down the file into pieces and send the requested piece to the peer.
     private void rcvRequest(byte[] msg) {
-        // Add your code here to handle the 'request' message.
+        // Check if peer is choked; if so do nothing
+        if (getPeer(peerId).isChoked()) {
+            return;
+        }
+
+        int pieceIndex = ByteConverter.fromByteArray(Arrays.copyOfRange(msg, 0, 4));
+
+        // Send piece to peer
+        sendMessage(MsgType.PIECE, PieceManager.getPiece(pieceIndex));
     }
 
     // Handle a received 'piece' message.
     // This method will be called when a 'piece' message is received from the peer.
-    // Update interestedness in everybody else (only send not-interested messages).
     //
+    // 1. Update my own bitfield.
+    // 2. Update interestedness in everybody else (only send not-interested messages).
+    // 3. Send have messages to everyone else about this piece.
+    // 4. Send another request
+    // 5. Store the piece in a file
     private void rcvPiece(byte[] msg) {
-        // Add your code here to handle the 'piece' message.
+        // First 4 bytes of msg are the piece index.
+        // The rest of the bytes are the piece contents.
+        int pieceIndex = ByteConverter.fromByteArray(Arrays.copyOfRange(msg, 0, 4));
+        byte[] pieceContents = Arrays.copyOfRange(msg, 4, msg.length);
 
+        // 1
+        myBitField.setBit(pieceIndex, true);
+        Logzzzzz.log("Peer " + myPeerId + " has downloaded the piece " + pieceIndex + " from " + peerId + ". Now the number of pieces it has is " + myBitField.getNumPieces() + ".");
+
+        // 2 and 3
+        ArrayList<String> peerIdsWeAreTellingAboutPiece = new ArrayList<>();
+        ArrayList<String> peerIdsWeAreNoLongerInterestedIn = new ArrayList<>();
+        for (Map.Entry<String, PeerDatum> entry : peerData.peerDataByName.entrySet()) {
+            String key = entry.getKey();
+            PeerDatum value = entry.getValue();
+
+            value.bitField.setBit(pieceIndex, false);
+            boolean interestedBefore = myBitField.interestedIn(value.bitField);
+            value.bitField.setBit(pieceIndex, true);
+            boolean interestedAfter = myBitField.interestedIn(value.bitField);
+
+
+            peerIdsWeAreTellingAboutPiece.add(key); // we are telling everyone about our new piece
+            if (interestedBefore && !interestedAfter) { // we are notifying only those we are newly-disinterested in
+                // Tell peer "value" we are not interested
+                peerIdsWeAreNoLongerInterestedIn.add(key);
+            }
+        }
+        if (broadcastCallback == null) {
+            System.out.println("You didn't set broadcastCallback, you doofus");
+        }
+        broadcastCallback.accept(new BroadcastCallbackArguments(peerIdsWeAreNoLongerInterestedIn, MsgType.NOT_INTERESTED, new byte[0]));
+        broadcastCallback.accept(new BroadcastCallbackArguments(
+                peerIdsWeAreTellingAboutPiece, MsgType.HAVE, ByteBuffer.allocate(4).putInt(pieceIndex).array()));
+
+        // 4
+        // If we are still interested in the peer, send another 'request' message
+        if (myBitField.interestedIn(getPeer(peerId).bitField)) {
+            int pieceToRequest = myBitField.chooseRandomPieceToRequest(getPeer(peerId).bitField);
+            sendMessage(MsgType.REQUEST, ByteBuffer.allocate(4).putInt(pieceToRequest).array());
+            System.out.println("Sent request for piece " + pieceToRequest + " to peer " + peerId);
+        }
+
+        // Create piece file
+        PieceManager.storePiece(pieceIndex, pieceContents);
+
+        // If we have all pieces, assemble into file
+        if (myBitField.allOnes()) {
+            onFileDownloadComplete();
+        }
+        checkForTermination();
     }
 
+    private void onFileDownloadComplete() {
+        Logzzzzz.log("Peer " + myPeerId + " has downloaded the complete file.");
+
+        PieceManager.assembleFile();
+    }
+
+    private void checkForTermination() {
+        // Check if all peers have all pieces
+        if (!myBitField.allOnes()) {
+            System.out.println("My bitfield is not all ones");
+            return;
+        }
+        for (PeerDatum peerDatum : peerData.peerDataByName.values()) {
+            if (!peerDatum.bitField.allOnes()) {
+                System.out.println("Peer " + peerDatum. + " does not have all pieces");
+                return;
+            }
+        }
+
+
+        // Terminate
+        System.exit(0);
+    }
 }

@@ -42,6 +42,7 @@ public class ByteConverter {
      * @return An integer representing the byte array.
      */
     public static int fromByteArray(byte[] byteArray) {
+        System.out.println(BitField.fromByteArray(byteArray).bits);
         // Initialize the result variable
         int result = 0;
 
