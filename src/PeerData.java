@@ -69,13 +69,6 @@ public class PeerData {
                 .filter(entry -> entry.getValue().interested && entry.getValue().isChoked())
                 .map(Map.Entry::getKey)
                 .toList();
-        // print every peer and whether they are interested or not and choked or not
-        // Print status of each peer
-        peerDataByName.forEach((key, peer) -> {
-            String interestStatus = peer.interested ? "Interested" : "Not Interested";
-            String chokeStatus = peer.isChoked() ? "Choked" : "Unchoked";
-            System.out.println("Peer " + key + ": " + interestStatus + ", " + chokeStatus);
-        });
 
         // If there are no interested and choked peers, return null
         if (interestedAndChokedPeers.isEmpty()) {

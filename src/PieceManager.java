@@ -44,7 +44,6 @@ public class PieceManager {
         }
     }
 
-
     public static void breakIntoPieces() {
         // For clients with the entire file on startup, break into pieces
         int numberOfPieces = bitfieldSize;
@@ -166,5 +165,4 @@ public class PieceManager {
         Matcher matcher = Pattern.compile("\\d+").matcher(file.getName());
         return matcher.find() ? Integer.parseInt(matcher.group()) : 0;
     }
-
 }

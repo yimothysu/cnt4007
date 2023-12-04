@@ -54,7 +54,7 @@ class Handler extends Thread {
         out.write(new byte[10]);
         out.write(ByteBuffer.allocate(4).putInt(Integer.parseInt(myPeerId)).array());
         out.flush();
-        System.out.println("Sent handshake!");
+        Logzzzzz.log("Peer " + myPeerId + " makes a connection (handshake) to Peer " + peerId + ".");
     }
 
     public void run() {
@@ -220,7 +220,9 @@ class Handler extends Thread {
         // are set to zero. Peers that don’t have anything yet may skip a 'bitfield' message.
         if (!myBitField.isEmpty()) {
             sendMessage(MsgType.BITFIELD, myBitField.toByteArray());
-            System.out.println("Sent bitfield: " + myBitField.bits.toString());
+            Logzzzzz.log("Peer " + myPeerId + " has sent a populated 'bitfield' message to Peer " + peerId + ".");
+        } else {
+            Logzzzzz.log("Peer " + myPeerId + ", because he has no file, did not send a 'bitfield' message to Peer " + peerId + ".");
         }
 
         peerData.peerDataByName.put(this.peerId, new PeerDatum());
@@ -245,7 +247,7 @@ class Handler extends Thread {
         if (myBitField.interestedIn(getPeer(peerId).bitField)) {
             int pieceToRequest = myBitField.chooseRandomPieceToRequest(getPeer(peerId).bitField);
             sendMessage(MsgType.REQUEST, ByteBuffer.allocate(4).putInt(pieceToRequest).array());
-            System.out.println("Sent request for piece " + pieceToRequest + " to peer " + peerId);
+            Logzzzzz.log("Peer " + myPeerId + " has sent a 'request' message to Peer " + peerId + " for piece " + pieceToRequest + ".");
         }
     }
 
@@ -276,6 +278,7 @@ class Handler extends Thread {
 
         if (!interestedBefore && interestedAfter) {
             sendMessage(MsgType.INTERESTED);
+            Logzzzzz.log("Peer " + myPeerId + " sent the 'interested' message to peer " + peerId + ".");
         }
 
         checkForTermination();
@@ -291,7 +294,7 @@ class Handler extends Thread {
         // If the peer is interested in the received bitfield, send an 'interested' message
         if (myBitField.interestedIn(receivedBitfield)) {
             sendMessage(MsgType.INTERESTED);
-            System.out.println("Sent interested to peer " + peerId);
+            Logzzzzz.log("Peer " + myPeerId + " sent the 'interested' message to peer " + peerId + ".");
         }
     }
 
@@ -354,12 +357,19 @@ class Handler extends Thread {
         broadcastCallback.accept(new BroadcastCallbackArguments(
                 peerIdsWeAreTellingAboutPiece, MsgType.HAVE, ByteBuffer.allocate(4).putInt(pieceIndex).array()));
 
+        for (String peerId : peerIdsWeAreTellingAboutPiece) {
+            Logzzzzz.log("Peer " + myPeerId + " sent the 'have' message to peer " + peerId + ".");
+        }
+        for (String peerId : peerIdsWeAreNoLongerInterestedIn) {
+            Logzzzzz.log("Peer " + myPeerId + " sent the 'not interested' message to peer " + peerId + ".");
+        }
+
         // 4
         // If we are still interested in the peer, send another 'request' message
         if (myBitField.interestedIn(getPeer(peerId).bitField)) {
             int pieceToRequest = myBitField.chooseRandomPieceToRequest(getPeer(peerId).bitField);
             sendMessage(MsgType.REQUEST, ByteBuffer.allocate(4).putInt(pieceToRequest).array());
-            System.out.println("Sent request for piece " + pieceToRequest + " to peer " + peerId);
+            Logzzzzz.log("Peer " + myPeerId + " has sent a 'request' message to Peer " + peerId + " for piece " + pieceToRequest + ".");
         }
 
         // Create piece file

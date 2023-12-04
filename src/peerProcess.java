@@ -77,9 +77,11 @@ public class peerProcess {
 
             for (String peerId : neighborSelectionData.toChoke()) {
                 getPeerHandler(peerId).sendMessage(MsgType.CHOKE);
+                Logzzzzz.log("Peer " + myPeerId + " sent CHOKE to " + peerId);
             }
             for (String peerId : neighborSelectionData.toUnchoke()) {
                 getPeerHandler(peerId).sendMessage(MsgType.UNCHOKE);
+                Logzzzzz.log("Peer " + myPeerId + " sent UNCHOKE to " + peerId);
             }
 
             for (PeerDatum peerDatum : peerData.peerDataByName.values()) {
@@ -100,7 +102,7 @@ public class peerProcess {
             }
         };
         // Schedules the task, following the initial delay of 2 seconds.
-        executor.scheduleAtFixedRate(selectOptUnchoked, 2, common.optimisticUnchokingIntervalInSeconds(), TimeUnit.SECONDS);
+        executor.scheduleAtFixedRate(selectOptUnchoked, 1, common.optimisticUnchokingIntervalInSeconds(), TimeUnit.SECONDS);
 
         // Listen for incoming connections
         listenForConnections();
