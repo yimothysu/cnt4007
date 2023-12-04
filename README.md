@@ -21,4 +21,4 @@ We were able to achieve all of the project requirements. That said, we are runni
 f. **Setup Instructions**:
 Unzip the file (it is a standard tgz file). Then, enter the `src/` directory and run `javac peerProcess.java`, then `java peerProcess <peerID>` for each peer.
 
-g. **GitHub Link**: TODO
+g. **GitHub Link**: https://github.com/jimsu2012/cnt4007
