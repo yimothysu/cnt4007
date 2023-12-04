@@ -30,3 +30,9 @@ bin/
 
 ### haha why is this not here there is probably a good reason but they are so much clutter ###
 *.class
+
+*.log
+*.zip
+peer_*
+canvas_items/
+project_config_file_small/

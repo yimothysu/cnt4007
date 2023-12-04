@@ -65,15 +65,12 @@ class Handler extends Thread {
             in = new ObjectInputStream(connection.getInputStream());
             sendHandshake();
 
-            // byte[] message = new byte[N];
-            // in.readFully(message);
             while (true) {
                 byte[] message = new byte[32];
                 in.readFully(message);
-                System.out.println("Received message " + Arrays.toString(message));
+                System.out.println("Received message from Client " + peerId);
                 if (isHandshake(message)) {
                     rcvHandshake(message);
-                    System.out.println("Received handshake");
                     break;
                 }
             }
@@ -94,14 +91,19 @@ class Handler extends Thread {
             }
         } catch (IOException ioException) {
             System.out.println("Disconnect with Client " + peerId);
+            checkForTermination();
+            ioException.printStackTrace();
         } finally {
-            //Close connections
+            // Close connections
             try {
+                //
                 in.close();
                 out.close();
                 connection.close();
+                checkForTermination();
             } catch (IOException ioException) {
                 System.out.println("Disconnect with Client " + peerId);
+                checkForTermination();
             }
         }
     }
@@ -110,22 +112,13 @@ class Handler extends Thread {
         return new String(msg, 0, 18).equals("P2PFILESHARINGPROJ");
     }
 
-    //send a message to the output stream
-    public void sendMessage(String msg) {
-        try {
-            out.writeObject(msg);
-            out.flush();
-            System.out.println("Send message: " + msg + " to Client " + peerId);
-        } catch (IOException ioException) {
-            ioException.printStackTrace();
-        }
-    }
-
     // send a message with message type but no message content
     public void sendMessage(MsgType type) {
         sendMessage(type, new byte[0]);
+        System.out.println("Sent message of type " + type + " to Client " + peerId);
     }
 
+    /*
     //send a message to the output stream
     public void sendMessage(MsgType type, byte[] msg) {
         try {
@@ -144,11 +137,30 @@ class Handler extends Thread {
             out.write(msg); // Using write instead of writeObject for raw bytes
             out.flush();
 
-            System.out.println("Send message: " + msg + " to Client " + peerId);
+            System.out.println("Sent message of type " + type + " to Client " + peerId);
         } catch (IOException ioException) {
+//            ioException.printStackTrace();
+        }
+    }
+     */
+    public void sendMessage(MsgType type, byte[] msg) {
+        try {
+            // Convert the length to a 4-byte array
+            int msgLength = msg.length + 1; // Adding 1 for the type byte
+
+            // Send the message
+            out.writeInt(msgLength);
+            out.writeByte(type.getValue());
+            out.write(msg);
+            out.flush();
+
+            System.out.println("Sent message of type " + type + " to Client " + peerId);
+        } catch (IOException ioException) {
+            // Handle the exception appropriately
             ioException.printStackTrace();
         }
     }
+
 
     record ParsedHeader(int length, int type) {}
 
@@ -204,8 +216,6 @@ class Handler extends Thread {
     // 'P2PFILESHARINGPROJ', followed by 10-byte zero bits, and then
     // a 4-byte peer ID representing the integer representation of the peer ID.
     private void rcvHandshake(byte[] msg) {
-        System.out.println("Invoke rcvHandshake");
-
         // Check if the message length is not 32 bytes
         if (msg.length != 32) {
             System.out.println("Invalid message length!");
@@ -303,21 +313,6 @@ class Handler extends Thread {
         BitField receivedBitfield = BitField.fromByteArray(msg);
         getPeer(peerId).bitField.setBitField(receivedBitfield.getBitfield());
 
-        // Print peerData for debugging purposes
-        System.out.println(peerData.peerDataByName);
-        for (Map.Entry<String, PeerDatum> entry : peerData.peerDataByName.entrySet()) {
-            String key = entry.getKey();
-            PeerDatum value = entry.getValue();
-            System.out.println(key + " " + value);
-        }
-
-        // print everything from peerdata
-        for (Map.Entry<String, PeerDatum> entry : peerData.peerDataByName.entrySet()) {
-            String key = entry.getKey();
-            PeerDatum value = entry.getValue();
-            System.out.println(key + " " + value);
-        }
-
         // If the peer is interested in the received bitfield, send an 'interested' message
         if (myBitField.interestedIn(receivedBitfield)) {
             sendMessage(MsgType.INTERESTED);
@@ -403,7 +398,7 @@ class Handler extends Thread {
     }
 
     private void onFileDownloadComplete() {
-        Logzzzzz.log("Peer " + myPeerId + " has downloaded the complete file.");
+        Logzzzzz.log("I, peer " + myPeerId + ", have downloaded the complete file.");
 
         PieceManager.assembleFile();
     }
@@ -411,27 +406,41 @@ class Handler extends Thread {
     private void checkForTermination() {
         // Check if all peers have all pieces
         if (!myBitField.allOnes()) {
-            System.out.println("My bitfield is not all ones");
+            return;
+        }
+
+        if (peerData.peerDataByName.values().size() < 2) {
+            for (String name : peerData.peerDataByName.keySet()) {
+                System.out.println("There are only " + peerData.peerDataByName.values().size() + " peers. Not terminating.");
+                if (!peerData.peerDataByName.get(name).bitField.allOnes()) {
+                    System.out.println("Peer " + name + " does not have all pieces. Not terminating.");
+                }
+            }
             return;
         }
 
         for (PeerDatum peerDatum : peerData.peerDataByName.values()) {
             if (!peerDatum.bitField.allOnes()) {
-                System.out.println("Peer " + peerDatum + " does not have all pieces");
-                // return; TODO
-            }
-        }
-        for (String peerName : peerData.peerDataByName.keySet()) {
-            PeerDatum peersDatum = peerData.peerDataByName.get(peerName);
-            if (!peersDatum.bitField.allOnes()) {
-                System.out.println("Peer " + peerName + " does not have all pieces");
-                System.out.println("Their bitfield is " + peersDatum.bitField.bits);
                 return;
             }
         }
 
-
         // Terminate
+        System.out.println("All peers have all pieces. Terminating in 5 seconds.");
+        // sleep 5 seconds
+        try {
+            Thread.sleep(5000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        // Terminate
+        System.out.println("All peers have all pieces. Terminating.");
+
+        try {
+            in.close();
+            out.close();
+            connection.close();
+        } catch (IOException e) {}
         System.exit(0);
     }
 }

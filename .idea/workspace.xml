@@ -5,20 +5,26 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="901477b9-6fa7-4b23-9467-b127e6fbea93" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/README.txt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/cnt4007.iml" beforeDir="false" afterPath="$PROJECT_DIR$/cnt4007.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ByteConverter.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/ByteConverter.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Common.cfg" beforeDir="false" afterPath="$PROJECT_DIR$/src/Common.cfg" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/Handler.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/Handler.java" afterDir="false" />
-    </list>
-    <list id="46f985b5-3c18-4dbd-adb6-ace9d4a01b84" name="Changes by aleja" comment="">
-      <change beforePath="$PROJECT_DIR$/src/Handler.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/Handler.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Logzzzzz.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/Logzzzzz.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/PeerData.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/PeerData.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/PeerDatum.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/PeerDatum.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/PeerInfoCfgReader.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/PeerInfoCfgReader.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/PieceManager.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/PieceManager.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/peerProcess.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/peerProcess.java" afterDir="false" />
     </list>
-    <list id="99c3dda7-5d53-469e-ad6a-48e86d1add61" name="Changes by jimsu" comment="">
+    <list id="95d39eb0-60cf-4ede-b8db-81606b608e91" name="Changes by Admin" comment="">
       <change beforePath="$PROJECT_DIR$/src/Handler.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/Handler.java" afterDir="false" />
+    </list>
+    <list id="7e21a2ee-b514-4cfb-85ea-998db2e5eda2" name="Changes by jimsu" comment="">
+      <change beforePath="$PROJECT_DIR$/src/Common.cfg" beforeDir="false" afterPath="$PROJECT_DIR$/src/Common.cfg" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Handler.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/Handler.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/PeerInfo.cfg" beforeDir="false" afterPath="$PROJECT_DIR$/src/PeerInfo.cfg" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/peerProcess.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/peerProcess.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -38,28 +44,49 @@
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
   <component name="LineStatusTrackerManager">
-    <file path="$PROJECT_DIR$/src/peerProcess.java">
-      <ranges>
-        <range start1="5" end1="5" start2="5" end2="8" changelist="99c3dda7-5d53-469e-ad6a-48e86d1add61" />
-        <range start1="16" end1="16" start2="19" end2="20" changelist="99c3dda7-5d53-469e-ad6a-48e86d1add61" />
-        <range start1="19" end1="19" start2="23" end2="25" changelist="46f985b5-3c18-4dbd-adb6-ace9d4a01b84" />
-        <range start1="36" end1="37" start2="42" end2="43" changelist="99c3dda7-5d53-469e-ad6a-48e86d1add61" />
-        <range start1="43" end1="43" start2="49" end2="50" changelist="46f985b5-3c18-4dbd-adb6-ace9d4a01b84" />
-        <range start1="50" end1="51" start2="57" end2="83" changelist="99c3dda7-5d53-469e-ad6a-48e86d1add61" />
-        <range start1="66" end1="67" start2="98" end2="101" changelist="46f985b5-3c18-4dbd-adb6-ace9d4a01b84" />
-        <range start1="80" end1="81" start2="114" end2="119" changelist="46f985b5-3c18-4dbd-adb6-ace9d4a01b84" />
-      </ranges>
-    </file>
     <file path="$PROJECT_DIR$/src/Handler.java">
       <ranges>
-        <range start1="8" end1="8" start2="8" end2="9" changelist="46f985b5-3c18-4dbd-adb6-ace9d4a01b84" />
-        <range start1="22" end1="22" start2="23" end2="25" changelist="46f985b5-3c18-4dbd-adb6-ace9d4a01b84" />
-        <range start1="30" end1="30" start2="33" end2="37" changelist="46f985b5-3c18-4dbd-adb6-ace9d4a01b84" />
-        <range start1="189" end1="189" start2="196" end2="199" changelist="46f985b5-3c18-4dbd-adb6-ace9d4a01b84" />
-        <range start1="243" end1="244" start2="253" end2="254" changelist="901477b9-6fa7-4b23-9467-b127e6fbea93" />
-        <range start1="253" end1="254" start2="263" end2="263" changelist="99c3dda7-5d53-469e-ad6a-48e86d1add61" />
+        <range start1="67" end1="69" start2="67" end2="67" changelist="901477b9-6fa7-4b23-9467-b127e6fbea93" />
+        <range start1="72" end1="73" start2="70" end2="71" changelist="901477b9-6fa7-4b23-9467-b127e6fbea93" />
+        <range start1="75" end1="76" start2="73" end2="73" changelist="901477b9-6fa7-4b23-9467-b127e6fbea93" />
+        <range start1="96" end1="96" start2="93" end2="95" changelist="901477b9-6fa7-4b23-9467-b127e6fbea93" />
+        <range start1="97" end1="98" start2="96" end2="97" changelist="901477b9-6fa7-4b23-9467-b127e6fbea93" />
+        <range start1="99" end1="99" start2="98" end2="99" changelist="901477b9-6fa7-4b23-9467-b127e6fbea93" />
+        <range start1="102" end1="102" start2="102" end2="103" changelist="901477b9-6fa7-4b23-9467-b127e6fbea93" />
+        <range start1="104" end1="104" start2="105" end2="106" changelist="901477b9-6fa7-4b23-9467-b127e6fbea93" />
+        <range start1="111" end1="122" start2="113" end2="113" changelist="901477b9-6fa7-4b23-9467-b127e6fbea93" />
+        <range start1="126" end1="126" start2="117" end2="118" changelist="901477b9-6fa7-4b23-9467-b127e6fbea93" />
+        <range start1="128" end1="128" start2="120" end2="121" changelist="95d39eb0-60cf-4ede-b8db-81606b608e91" />
+        <range start1="146" end1="147" start2="139" end2="140" changelist="901477b9-6fa7-4b23-9467-b127e6fbea93" />
+        <range start1="148" end1="149" start2="141" end2="142" changelist="7e21a2ee-b514-4cfb-85ea-998db2e5eda2" />
+        <range start1="151" end1="151" start2="144" end2="163" changelist="95d39eb0-60cf-4ede-b8db-81606b608e91" />
+        <range start1="206" end1="208" start2="218" end2="218" changelist="901477b9-6fa7-4b23-9467-b127e6fbea93" />
+        <range start1="305" end1="320" start2="315" end2="315" changelist="901477b9-6fa7-4b23-9467-b127e6fbea93" />
+        <range start1="405" end1="406" start2="400" end2="401" changelist="901477b9-6fa7-4b23-9467-b127e6fbea93" />
+        <range start1="413" end1="414" start2="408" end2="408" changelist="901477b9-6fa7-4b23-9467-b127e6fbea93" />
+        <range start1="417" end1="417" start2="411" end2="421" changelist="7e21a2ee-b514-4cfb-85ea-998db2e5eda2" />
+        <range start1="419" end1="428" start2="423" end2="423" changelist="901477b9-6fa7-4b23-9467-b127e6fbea93" />
+        <range start1="432" end1="433" start2="427" end2="435" changelist="901477b9-6fa7-4b23-9467-b127e6fbea93" />
+        <range start1="434" end1="434" start2="436" end2="443" changelist="901477b9-6fa7-4b23-9467-b127e6fbea93" />
       </ranges>
     </file>
+    <file path="$PROJECT_DIR$/src/Common.cfg">
+      <ranges>
+        <range start1="0" end1="1" start2="0" end2="1" changelist="901477b9-6fa7-4b23-9467-b127e6fbea93" />
+        <range start1="3" end1="6" start2="3" end2="6" changelist="7e21a2ee-b514-4cfb-85ea-998db2e5eda2" />
+      </ranges>
+    </file>
+    <file path="$PROJECT_DIR$/src/peerProcess.java">
+      <ranges>
+        <range start1="63" end1="64" start2="63" end2="64" changelist="901477b9-6fa7-4b23-9467-b127e6fbea93" />
+        <range start1="66" end1="67" start2="66" end2="67" changelist="901477b9-6fa7-4b23-9467-b127e6fbea93" />
+        <range start1="70" end1="71" start2="70" end2="71" changelist="901477b9-6fa7-4b23-9467-b127e6fbea93" />
+        <range start1="120" end1="121" start2="120" end2="121" changelist="7e21a2ee-b514-4cfb-85ea-998db2e5eda2" />
+      </ranges>
+    </file>
+  </component>
+  <component name="MarkdownSettingsMigration">
+    <option name="stateVersion" value="1" />
   </component>
   <component name="ProjectColorInfo">{
   &quot;associatedIndex&quot;: 1
@@ -87,14 +114,14 @@
     &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
     &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
     &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.fileTypes&quot;,
     &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
 }</component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
-      <recent name="$PROJECT_DIR$" />
       <recent name="$PROJECT_DIR$/src" />
+      <recent name="$PROJECT_DIR$" />
     </key>
   </component>
   <component name="RunManager">

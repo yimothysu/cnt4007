@@ -22,6 +22,12 @@ public class Logzzzzz {
 
     public static void log(String message) {
         logger.info(message);
+//        try {
+//            Thread.sleep(10); // 100 milliseconds = 0.1 seconds
+//        } catch (InterruptedException e) {
+//            e.printStackTrace();
+//            // Handle the interruption appropriately
+//        }
     }
 
     public static void initWithPeerId(String peerId) {

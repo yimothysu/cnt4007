@@ -1,4 +1,6 @@
 import java.util.*;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class PeerData {
     public HashMap<String, PeerDatum> peerDataByName = new HashMap<>();
@@ -8,75 +10,26 @@ public class PeerData {
     }
 
 
-    public NeighborSelectionData selectPreferredNeighbors(int preferrredNeighborCount) {
-        ArrayList<PeerDatum> interestedPeers = new ArrayList<>();
-        for (PeerDatum peer : peerDataByName.values()) {
-            if (peer.interested) {
-                interestedPeers.add(peer);
-            }
-        }
+    public NeighborSelectionData selectPreferredNeighbors(int preferredNeighborCount) {
+        // Filter and collect interested peers
+        List<PeerDatum> interestedPeers = peerDataByName.values().stream()
+                .filter(peer -> peer.interested)
+                .collect(Collectors.toList());
+
+        // Shuffle the list to randomize the order
+        Collections.shuffle(interestedPeers);
 
         // Sort interested peers by download speed in nonincreasing order
         interestedPeers.sort((a, b) -> Double.compare(b.getDownloadSpeed(), a.getDownloadSpeed()));
 
-        /*
-            We handle ties by randomly selecting peers with the same download speeds.
-
-            We only have to handle ties when there exists an interval [alpha, beta] of
-            peers in the interested peers list such that each peer in the interval has
-            the same download speed and such that preferredNeighborCount - 1 lies
-            in [alpha, beta - 1].
-         */
-        if (interestedPeers.size() <= preferrredNeighborCount) {
+        // If there are fewer or equal interested peers than the preferred count, select them all
+        if (interestedPeers.size() <= preferredNeighborCount) {
             return handlePreferredNeighborSelection(new HashSet<>(interestedPeers));
         }
 
-        // Compute beta
-        int beta = interestedPeers.size();
-        float gamma = interestedPeers.get(beta - 1).getDownloadSpeed();
-        while (interestedPeers.get(beta).getDownloadSpeed() < gamma) {
-            --beta;
-        }
-
-        /*
-            In this case we do not have to handle tiebreaker since the interval [alpha, beta]
-            lies entirely inside [0, preferredNeighborCount - 1].
-         */
-        if (beta == preferrredNeighborCount - 1) {
-            return handlePreferredNeighborSelection(new HashSet<>(interestedPeers));
-        }
-
-        // Compute alpha
-        int alpha = beta;
-        while (alpha > 0 && interestedPeers.get(alpha - 1).getDownloadSpeed() == gamma) {
-            --alpha;
-        }
-
-        // Construct interestedPeers and copy over peers [0, alpha) from interested peers list
-        ArrayList<PeerDatum> peersToSelect = new ArrayList<>();
-        for (int i = 0; i < alpha; ++i) {
-            peersToSelect.add(interestedPeers.get(i));
-        }
-
-        // Number of peers to randomly select from interval [alpha, beta]
-        int M = preferrredNeighborCount - alpha;
-
-        // Peers in interval [alpha, beta] in interested peers list
-        ArrayList<PeerDatum> borderPeers = new ArrayList<>();
-        for (int i = alpha; i <= beta; ++i) {
-            borderPeers.add(interestedPeers.get(i));
-        }
-
-        // Randomly select M peers from borderPeers list by removal
-        int removeCount = borderPeers.size() - M;
-        for (int i = 0; i < removeCount; i++) {
-            borderPeers.remove(rand.nextInt(borderPeers.size()));
-        }
-
-        // Merge borderPeers into peersToSelect list
-        peersToSelect.addAll(borderPeers);
-
-        return handlePreferredNeighborSelection(new HashSet<>(peersToSelect));
+        // Otherwise, select the top preferredNeighborCount peers
+        List<PeerDatum> selectedPeers = interestedPeers.subList(0, preferredNeighborCount);
+        return handlePreferredNeighborSelection(new HashSet<>(selectedPeers));
     }
 
     /**
@@ -147,15 +100,12 @@ public class PeerData {
                 if (peer.isChoked()) {
                     toUnchoke.add(peerId);
                     peer.prefer();
-                    System.out.println("TEMP LOG: PREFERRING PEER " + peerId);
-
                 }
             }
             else {
                 if (peer.isPreferred()) {
                     toChoke.add(peerId);
                     peer.choke();
-                    System.out.println("TEMP LOG: CHOKING PEER " + peerId);
                 }
             }
         }

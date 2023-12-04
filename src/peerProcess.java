@@ -61,14 +61,14 @@ public class peerProcess {
                     = peerData.selectPreferredNeighbors(common.numberOfPreferredNeighbors());
 
             if (neighborSelectionData.toUnchoke().size() + neighborSelectionData.toChoke().size() > 0) {
-                String serializedNeighborsListForLogging = "";
+                StringBuilder serializedNeighborsListForLogging = new StringBuilder();
                 String delimiter = "";
                 for (String str : neighborSelectionData.toChoke()) {
-                    serializedNeighborsListForLogging += delimiter + str;
+                    serializedNeighborsListForLogging.append(delimiter).append(str);
                     delimiter = ", ";
                 }
                 for (String str : neighborSelectionData.toUnchoke()) {
-                    serializedNeighborsListForLogging += delimiter + str;
+                    serializedNeighborsListForLogging.append(delimiter).append(str);
                     delimiter = ", ";
                 }
                 Logzzzzz.log("Peer " + myPeerId + " has the preferred neighbors " + serializedNeighborsListForLogging);
@@ -118,7 +118,7 @@ public class peerProcess {
      */
     private static void setUpConnection(String peerId) throws IOException {
         int sPort = Integer.parseInt(peerInfoMap.get(peerId).peerPort);
-        Socket requestSocket = new Socket(peerInfoMap.get(myPeerId).peerAddress, sPort);
+        Socket requestSocket = new Socket(peerInfoMap.get(peerId).peerAddress, sPort);
         Handler handler = new Handler(requestSocket, myPeerId, peerId, myBitField, peerData);
         handler.setBroadcastCallback((BroadcastCallbackArguments arguments) -> {
             for (String peerIdToSendTo : arguments.peerIds) {

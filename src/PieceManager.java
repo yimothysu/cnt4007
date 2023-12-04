@@ -22,15 +22,28 @@ public class PieceManager {
     }
 
     private static void createDirectories() {
-        // peer_1001 and peer_1001/pieces
-        File dir2 = new File(piecesDirPath);
-        if (!dir2.exists()) {
-            boolean result = dir2.mkdirs();
+        // Clear the pieces directory first
+        File piecesDir = new File(piecesDirPath);
+        if (piecesDir.exists()) {
+            File[] files = piecesDir.listFiles();
+            if (files != null) {
+                for (File file : files) {
+                    if (!file.delete()) {
+                        System.out.println("Failed to delete file: " + file.getName());
+                    }
+                }
+            }
+        }
+
+        // Create the directories if they don't exist
+        if (!piecesDir.exists()) {
+            boolean result = piecesDir.mkdirs();
             if (!result) {
                 System.out.println("Failed to create directories");
             }
         }
     }
+
 
     public static void breakIntoPieces() {
         // For clients with the entire file on startup, break into pieces
@@ -46,6 +59,7 @@ public class PieceManager {
             int bytesRead;
 
             for (int piece = 0; piece < numberOfPieces; piece++) {
+                System.out.println("Breaking piece " + piece + " of " + numberOfPieces);
                 String pieceFileName = getPieceFilePath(piece);
                 try (FileOutputStream fos = new FileOutputStream(pieceFileName)) {
                     long writtenBytes = 0;
