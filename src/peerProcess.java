@@ -3,6 +3,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -21,7 +22,7 @@ public class peerProcess {
     // An array list to store the IDs of peers that precede this peer
     static ArrayList<String> precedingPeerIds = new ArrayList<>();
 
-    static HashMap<String, Handler> peerHandlers;
+    static ConcurrentHashMap<String, Handler> peerHandlers = new ConcurrentHashMap<>();
 
     /**
      * The main method initializes connections and listens for incoming connections.
@@ -47,7 +48,7 @@ public class peerProcess {
         readBitFieldFromPeerInfo(common);
 
         peerData = new PeerData();
-        peerHandlers = new HashMap<>();
+        peerHandlers = new ConcurrentHashMap<>();
 
         // Establish connections with peers that precede this one in the network
         for (String peerId : precedingPeerIds) {
@@ -148,11 +149,13 @@ public class peerProcess {
                 });
                 handler.setBroadcastCallback((BroadcastCallbackArguments arguments) -> {
                     for (String peerId : arguments.peerIds) {
-                        getPeerHandler(peerId).sendMessage(arguments.msgType, arguments.payload);
+                        Handler peerHandler = peerHandlers.get(peerId);
+                        if (peerHandler != null) {
+                            peerHandler.sendMessage(arguments.msgType, arguments.payload);
+                        }
                     }
                 });
                 handler.start();
-
             }
         }
     }

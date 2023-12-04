@@ -118,31 +118,6 @@ class Handler extends Thread {
         System.out.println("Sent message of type " + type + " to Client " + peerId);
     }
 
-    /*
-    //send a message to the output stream
-    public void sendMessage(MsgType type, byte[] msg) {
-        try {
-            // Convert the length to a 4-byte array
-            int msgLength = msg.length + 1; // Adding 1 for the type byte
-
-            ByteBuffer buffer = ByteBuffer.allocate(4);
-            buffer.putInt(msgLength);
-            byte[] length = buffer.array();
-
-            // Send the message
-            out.write(length);
-            ByteBuffer tp = ByteBuffer.allocate(1);
-            tp.put(type.getValue());
-            out.write(tp.array());
-            out.write(msg); // Using write instead of writeObject for raw bytes
-            out.flush();
-
-            System.out.println("Sent message of type " + type + " to Client " + peerId);
-        } catch (IOException ioException) {
-//            ioException.printStackTrace();
-        }
-    }
-     */
     public void sendMessage(MsgType type, byte[] msg) {
         try {
             // Convert the length to a 4-byte array
@@ -181,7 +156,7 @@ class Handler extends Thread {
 //        bitfield 5
 //        request 6
 //        piece 7
-        System.out.println("Parsed type is " + parsed.type);
+        // System.out.println("Parsed type is " + parsed.type);
         switch (parsed.type) {
             case 0:
                 rcvChoke();
@@ -409,7 +384,7 @@ class Handler extends Thread {
             return;
         }
 
-        if (peerData.peerDataByName.values().size() < 2) {
+        if (peerData.peerDataByName.values().size() < 5) {
             for (String name : peerData.peerDataByName.keySet()) {
                 System.out.println("There are only " + peerData.peerDataByName.values().size() + " peers. Not terminating.");
                 if (!peerData.peerDataByName.get(name).bitField.allOnes()) {
@@ -427,14 +402,13 @@ class Handler extends Thread {
 
         // Terminate
         System.out.println("All peers have all pieces. Terminating in 5 seconds.");
+
         // sleep 5 seconds
         try {
             Thread.sleep(5000);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        // Terminate
-        System.out.println("All peers have all pieces. Terminating.");
 
         try {
             in.close();

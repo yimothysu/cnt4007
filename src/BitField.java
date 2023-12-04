@@ -2,7 +2,7 @@ import java.util.ArrayList;
 import java.util.Random;
 
 public class BitField {
-    private static Random rand = new Random("haha".hashCode());
+    private static final Random rand = new Random();
     ArrayList<Boolean> bits;
 
     public BitField(ArrayList<Boolean> bits) {
