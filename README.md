@@ -23,7 +23,7 @@ Unzip the file (it is a standard tgz file). Then, enter the project root, enter 
 
 Before the above will work, you need to have `peer_1001`, `peer_1002`, etc. directories in the root of the project. Peers that start with the file must have it in their `peer_X` directory.
 
-You also need a `PeerInfo.cfg` file, which contains the peer ID, host name, and listening port for each peer. The `Common.cfg` file should also be in the root of the project. This file contains the number of preferred neighbors, unchoking interval, optimistic unchoking interval, file size, and piece size.
+You also need a `src/PeerInfo.cfg` file, which contains the peer ID, host name, and listening port for each peer. The `src/Common.cfg` file should also be in the root of the project. This file contains the number of preferred neighbors, unchoking interval, optimistic unchoking interval, file size, and piece size.
 
 We have included an example of each of these files in the root of the project.
 
